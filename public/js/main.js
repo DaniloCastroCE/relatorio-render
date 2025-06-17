@@ -1,4 +1,4 @@
-var itens = {count: 0, ativo: false}
+var itens = { count: 0, ativo: false }
 
 const resizeObserver = new ResizeObserver(entries => {
     for (let entry of entries) {
@@ -26,7 +26,7 @@ const initAddCountItensToLogo = async () => {
 
         if (result.status === 'success') {
             itens.count = result.qt
-            itens.ativo =  true
+            itens.ativo = true
         }
     } catch (error) {
         console.error(`Erro na função addCountItensToLogo: ${error}`)
@@ -37,30 +37,91 @@ const initAddCountItensToLogo = async () => {
 
 initAddCountItensToLogo()
 
+const checkNomeList = async (obj) => {
+
+    const nome = obj.value.toLowerCase().trim()
+
+    if (nome) {
+        try {
+            const response = await fetch(`/checkNome/${nome}`)
+
+            if (!response.ok) {
+                throw new Error(`Falha na requisição: ${response.statusText}`)
+            }
+
+            const result = await response.json()
+
+            if (result.exists) showExistsNome(result.time)
+
+        } catch (err) {
+            console.error(`Erro: ${err}`)
+        }
+    } else {
+        showExistsNome('nulo')
+    }
+
+}
+
+let timeoutId;
+
+const showExistsNome = (time) => {
+    const texto = time !== '' && time !== undefined && time !== null ? `(${time})` : ''
+    const info = document.querySelector('#exists-name')
+    const infoAddOs = document.querySelector('#exists-name-addOs')
+    const textInfo = info.querySelector('p')
+
+    if (timeoutId) {
+        clearTimeout(timeoutId)
+    }
+
+    if (time === 'nulo') {
+        info.style.opacity = 0;
+        info.style.visibility = 'hidden';
+        infoAddOs.style.opacity = 0;
+        infoAddOs.style.visibility = 'hidden';
+
+    } else {
+        textInfo.textContent = `Nome encontrado na lista! ${texto}`
+        info.style.visibility = 'visible';
+        info.style.opacity = 0.7;
+
+        infoAddOs.style.visibility = 'visible';
+        infoAddOs.style.opacity = 1;
+
+        timeoutId = setTimeout(() => {
+            info.style.opacity = 0;
+            info.style.visibility = 'hidden';
+            infoAddOs.style.opacity = 0;
+            infoAddOs.style.visibility = 'hidden';
+        }, 10000)
+    }
+
+}
+
 const addCountItensToLogo = (op) => {
 
-    if(typeof op === 'undefined') op = ''
-    
+    if (typeof op === 'undefined') op = ''
+
     const text = document.querySelector('#lodoText')
 
-    if(op === '+') {
+    if (op === '+') {
         itens.count++
-    }else if(op === '-') {
+    } else if (op === '-') {
         itens.count--
-    }else if (op === 'clear') {
+    } else if (op === 'clear') {
         itens.count = 0
     }
-    
-    if(!itens.ativo) {
+
+    if (!itens.ativo) {
         text.textContent = 'Relatório Maracanaú'
     }
     else if (itens.count <= 1) {
         text.textContent = `${itens.count} registro`
-    } 
+    }
     else {
         text.textContent = `${itens.count} registros`
     }
-    console.log('Relatório: ', itens.count)
+    //console.log('Relatório: ', itens.count)
 }
 
 
@@ -313,7 +374,7 @@ const addItemToListPrevious = (idInputs, id) => {
     else {
         document.querySelector(`#${idOs}`).disabled = false
     }
-    
+
     let novoItem = {}
     //console.log(novoItem)
     Object.keys(ItemList).forEach(key => {
@@ -346,12 +407,8 @@ const getAllOS_part = (status, result, error) => {
         }
 
     } else {
-        if (confirm(`Error ao carregar lista, deseja tentar novamente ?\n\nError: ${error}`)) {
-            clickMenu('nav-list')
-            scrollToBottom()
-        } else {
-            clickMenu('nav-add')
-        }
+        alert(`Erro ao carregar lista, tente novamente ! \n\nMotivo do erro: ${error}`)
+        clickMenu('nav-add')
     }
 }
 
@@ -364,19 +421,20 @@ const getAllOS = async (callback) => {
         if (data.status === 'success') {
             console.log(data.message)
             callback(data.status, data.json)
+            loading('close')
         } else {
             callback(data.status, data.message, data.error)
+            loading('close')
         }
 
 
     } catch (err) {
         console.error(`Erro: ${err}`)
-    } finally {
         loading('close')
     }
 }
 
-getAllOS(getAllOS_part)
+//getAllOS(getAllOS_part)
 
 const codeHtmlItemToList = (lista_edit, id, item, ordem) => {
 
@@ -400,7 +458,7 @@ const codeHtmlItemToList = (lista_edit, id, item, ordem) => {
             <form id="formInputs${id}" onsubmit="deletarItem(event,'${id}', '${item.nome.toUpperCase()}');">
                 <div class="form-group">
                     <label for="nome${id}">Nome</label>
-                    <input type="text" name="nome" id="nome${id}" required onchange="addItemToListPrevious('formInputs','${id}');">
+                    <input class="nomePreviousInput" type="text" name="nome" id="nome${id}" required onchange="addItemToListPrevious('formInputs','${id}');">
                 </div>
                 <div class="form-group flex-direction-row">
                     <div class="form-group">
@@ -472,7 +530,7 @@ const codeHtmlItemToList = (lista_edit, id, item, ordem) => {
         </div>
 
         <div class="previous listaPrevious">
-            <h5 id="preVisualizacao${id}" class="no-select">Pré-Visualização</h5>
+            <h5 id="preVisualizacao${id}" class="no-select preVisualizacaoList">Pré-Visualização</h5>
             <p id="previous-nome${id}" class="previous-nome ${classExec}"></p>
             <p id="previous-zona${id}"></p>
             <p id="previous-horario${id}"></p>
@@ -637,7 +695,7 @@ const createOS = async (e) => {
         obs: form.obs.value,
     }
 
-    console.log(os)
+    //console.log(os)
 
     try {
         const response = await fetch('/create', {
@@ -655,6 +713,7 @@ const createOS = async (e) => {
         const data = await response.json()
 
         alert(data.message)
+        console.log(data.message)
         if (data.status === 'success') form.reset()
         addItemToListPrevious('formInputs')
         loading('close')
@@ -702,9 +761,11 @@ const copyListPrevious = async () => {
                             font-family: 'Segoe UI', Roboto, sans-serif; 
                             font-weight: 700; 
                             font-size: 18pt; 
-                            margin: 10px 0 10px;
+                            margin: 10px 0 20px;
                             color: black;
                         "> Relatório de Acionamentos de Maracanaú</h2>\n\n`;
+
+        plainText += `Relatório de Acionamentos de Maracanaú\n\n\n`
 
         previous.forEach(item => {
             const execOrig = item.exec?.orig;
@@ -901,13 +962,13 @@ const copy_aux = async (op) => {
 }
 
 const scrollToBottom = () => {
-  try{
-    window.scrollTo({
-      top: document.body.scrollHeight,
-      behavior: 'smooth'
-    })  
-  }catch (error) {
-    console.error('Erro na função scrollToBottom: ', error)
-  }
-  
+    try {
+        window.scrollTo({
+            top: document.body.scrollHeight,
+            behavior: 'smooth'
+        })
+    } catch (error) {
+        console.error('Erro na função scrollToBottom: ', error)
+    }
+
 }
