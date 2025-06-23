@@ -61,6 +61,46 @@ router.get('/get/:id', async (req, res) => {
     }
 })
 
+router.get('/checkNome/:nome', async (req, res) => {
+  
+  try{
+    const nome = req.params.nome.toLowerCase().trim()
+  
+    if(!nome) {
+      return res.status(200).json({
+        status: 'error',
+        message: 'Nome em branco',
+        exists: false,
+      })
+    }
+
+    const nomeList = await Item.findOne({ nome });
+   
+
+    if(!nomeList) {
+      return res.status(200).json({
+        status: 'error',
+        message: 'Não existe o nome',
+        exists: false,
+      })
+    } 
+    else {
+      console.log('requisição ok')
+      return res.status(200).json({
+        status: 'success',
+        message: 'Nome encontrado',
+        exists: true,
+        time: nomeList.horario
+      })
+    
+    }  
+  }catch (err) {
+    console.error(`Erro: ${err.message}`)
+  }
+  
+  
+})
+           
 router.delete('/deleteAll', async (req, res) => {
     try {
         const result = await Item.deleteMany({})
@@ -111,7 +151,7 @@ router.delete('/delete/:id', async (req, res) => {
 router.post('/create', async (req, res) => {
     const { nome, zona, horario, contato, envio, os, obs } = req.body
 
-    if (!nome || !zona || !contato || !envio) {
+    if (!nome) {
         return res.status(422).json({
             status: 'error',
             message: 'Obrigatorio preenchar os campos NOME e ZONA',
@@ -137,7 +177,7 @@ router.put('/update/:id', async (req, res) => {
         const id = req.params.id
         const { nome, zona, horario, contato, envio, os, obs, exec } = req.body
 
-        if (!nome || !zona || !contato || !envio) {
+        if (!nome) {
             return res.status(422).json({
                 status: 'error',
                 message: 'Obrigatorio preenchar os campos NOME e ZONA',
